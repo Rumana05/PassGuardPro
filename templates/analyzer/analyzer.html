@@ -1,4 +1,293 @@
 {% extends 'base.html' %}
+{% block title %}Password Analyzer — PassGuard Pro{% endblock %}
+
 {% block content %}
-<h2>Analyzer — Coming Soon</h2>
+<div class="page-header">
+  <h2><i class="fas fa-magnifying-glass-chart me-2 text-primary"></i>Password Analyzer</h2>
+  <p>Advanced password strength analysis with breach detection</p>
+</div>
+
+<div class="row g-4">
+  <!-- Input Card -->
+  <div class="col-lg-7">
+    <div class="card p-4 mb-4">
+      <h5 class="mb-3 fw-bold">Analyze Password</h5>
+
+      <div class="input-group mb-3">
+        <span class="input-group-text"><i class="fas fa-key"></i></span>
+        <input type="password" id="passwordInput" class="form-control"
+               placeholder="Enter password to analyze..." autocomplete="off"/>
+        <button class="btn btn-outline-secondary" id="toggleBtn">
+          <i class="fas fa-eye" id="eyeIcon"></i>
+        </button>
+      </div>
+
+      <!-- Live strength bar (updates while typing) -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">Live Strength</small>
+          <span id="liveLabel" class="badge bg-secondary">—</span>
+        </div>
+        <div class="progress" style="height:8px;border-radius:8px;">
+          <div id="liveBar" class="progress-bar" style="width:0%;border-radius:8px;transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-100 py-2" id="analyzeBtn">
+        <i class="fas fa-search me-2"></i>Deep Analyze + Breach Check
+      </button>
+
+      <div id="loadingDiv" class="text-center py-3" style="display:none;">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted small">Checking breach database...</p>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsCard" class="card p-4" style="display:none;">
+      <h5 class="fw-bold mb-3">Analysis Results</h5>
+
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="text-muted">Overall Strength</span>
+        <span id="strengthBadge" class="badge fs-6"></span>
+      </div>
+      <div class="progress mb-4" style="height:12px;border-radius:10px;">
+        <div id="strengthBar" class="progress-bar" style="width:0%;border-radius:10px;transition:width 0.6s;"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="row g-2 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="text-center p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:1.5rem;font-weight:700;color:#a5b4fc;" id="sLen">0</div>
+            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;">Length</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-center p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:1.5rem;font-weight:700;color:#a5b4fc;" id="sUpper">0</div>
+            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;">Uppercase</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-center p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:1.5rem;font-weight:700;color:#a5b4fc;" id="sDigits">0</div>
+            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;">Digits</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-center p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:1.5rem;font-weight:700;color:#a5b4fc;" id="sSpecial">0</div>
+            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;">Special</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entropy + Crack time -->
+      <div class="row g-2 mb-4">
+        <div class="col-6">
+          <div class="p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:0.75rem;color:#94a3b8;">ENTROPY</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#818cf8;" id="sEntropy">0 bits</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="p-3 rounded" style="background:#0f172a;border:1px solid #334155;">
+            <div style="font-size:0.75rem;color:#94a3b8;">CRACK TIME</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#818cf8;" id="sCrack">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div id="feedbackList" class="mb-4"></div>
+
+      <!-- Breach -->
+      <div id="breachDiv" class="mb-4"></div>
+
+      <!-- Suggestion -->
+      <div class="p-3 rounded" style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="fas fa-wand-magic-sparkles me-2 text-success"></i>Strong Password Suggestion</span>
+          <button class="btn btn-sm btn-outline-success" id="copyBtn">
+            <i class="fas fa-copy me-1"></i>Copy
+          </button>
+        </div>
+        <code id="suggestionText" class="text-success d-block text-break"></code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Recent checks -->
+  <div class="col-lg-5">
+    <div class="card p-4">
+      <h5 class="fw-bold mb-3"><i class="fas fa-clock-rotate-left me-2 text-muted"></i>Recent Checks</h5>
+      {% if recent %}
+        {% for check in recent %}
+        <div class="d-flex justify-content-between align-items-center py-2"
+             style="border-bottom:1px solid #334155;">
+          <div>
+            <code style="color:#a5b4fc;">{{ check.password_masked }}</code>
+            <div style="font-size:0.75rem;color:#94a3b8;">{{ check.checked_at|date:"M d, H:i" }}</div>
+          </div>
+          <div class="text-end">
+            {% if check.strength_label == 'Very Strong' %}
+              <span class="badge bg-success">{{ check.strength_label }}</span>
+            {% elif check.strength_label == 'Strong' %}
+              <span class="badge bg-info">{{ check.strength_label }}</span>
+            {% elif check.strength_label == 'Moderate' %}
+              <span class="badge bg-warning text-dark">{{ check.strength_label }}</span>
+            {% else %}
+              <span class="badge bg-danger">{{ check.strength_label }}</span>
+            {% endif %}
+            {% if check.was_breached %}
+              <div style="font-size:0.7rem;color:#fca5a5;"><i class="fas fa-triangle-exclamation"></i> Breached</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted text-center py-3">No checks yet</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const passwordInput = document.getElementById('passwordInput');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const toggleBtn = document.getElementById('toggleBtn');
+const eyeIcon = document.getElementById('eyeIcon');
+
+// Toggle visibility
+toggleBtn.addEventListener('click', () => {
+  const isPass = passwordInput.type === 'password';
+  passwordInput.type = isPass ? 'text' : 'password';
+  eyeIcon.className = isPass ? 'fas fa-eye-slash' : 'fas fa-eye';
+});
+
+// Live strength while typing
+passwordInput.addEventListener('input', () => {
+  const val = passwordInput.value;
+  const bar = document.getElementById('liveBar');
+  const label = document.getElementById('liveLabel');
+  const len = val.length;
+  let score = 0;
+  if (len >= 8) score++;
+  if (len >= 12) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[a-z]/.test(val)) score++;
+  if (/\d/.test(val)) score++;
+  if (/[^a-zA-Z0-9]/.test(val)) score += 2;
+
+  const levels = [
+    [0, 'Very Weak', '#dc2626', 10],
+    [1, 'Weak', '#dc2626', 25],
+    [3, 'Moderate', '#ca8a04', 50],
+    [5, 'Strong', '#0ea5e9', 75],
+    [6, 'Very Strong', '#16a34a', 100],
+  ];
+  let current = levels[0];
+  for (const l of levels) { if (score >= l[0]) current = l; }
+
+  bar.style.width = (val.length === 0 ? 0 : current[3]) + '%';
+  bar.style.backgroundColor = current[2];
+  label.textContent = val.length === 0 ? '—' : current[1];
+  label.style.background = current[2];
+});
+
+// Enter key
+passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') analyzeBtn.click(); });
+
+// Deep analyze
+analyzeBtn.addEventListener('click', async () => {
+  const password = passwordInput.value.trim();
+  if (!password) { passwordInput.focus(); return; }
+
+  document.getElementById('resultsCard').style.display = 'none';
+  document.getElementById('loadingDiv').style.display = 'block';
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+
+  try {
+    const res = await fetch('/analyzer/api/analyze/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+      body: JSON.stringify({password})
+    });
+    const data = await res.json();
+    renderResults(data);
+  } catch(e) {
+    alert('Error! Please try again.');
+  } finally {
+    document.getElementById('loadingDiv').style.display = 'none';
+    analyzeBtn.disabled = false;
+    analyzeBtn.innerHTML = '<i class="fas fa-search me-2"></i>Deep Analyze + Breach Check';
+  }
+});
+
+function renderResults(data) {
+  const colorMap = {success:'#16a34a', info:'#0ea5e9', warning:'#ca8a04', danger:'#dc2626'};
+  const badgeMap = {success:'bg-success', info:'bg-info', warning:'bg-warning text-dark', danger:'bg-danger'};
+  const c = data.strength_class;
+
+  document.getElementById('strengthBar').style.width = data.bar_width + '%';
+  document.getElementById('strengthBar').style.backgroundColor = colorMap[c];
+  const badge = document.getElementById('strengthBadge');
+  badge.className = 'badge fs-6 ' + badgeMap[c];
+  badge.textContent = data.strength;
+
+  document.getElementById('sLen').textContent = data.details.length || 0;
+  document.getElementById('sUpper').textContent = data.details.uppercase || 0;
+  document.getElementById('sDigits').textContent = data.details.digits || 0;
+  document.getElementById('sSpecial').textContent = data.details.special || 0;
+  document.getElementById('sEntropy').textContent = (data.details.entropy || 0) + ' bits';
+  document.getElementById('sCrack').textContent = data.details.crack_time || '—';
+
+  const icons = {success:'fa-check-circle', warning:'fa-exclamation-circle', danger:'fa-times-circle'};
+  const feedbackList = document.getElementById('feedbackList');
+  feedbackList.innerHTML = '';
+  (data.feedback || []).forEach(([type, msg]) => {
+    feedbackList.innerHTML += `
+      <div style="display:flex;gap:8px;padding:8px 12px;border-radius:8px;margin-bottom:6px;
+        background:${type==='success'?'rgba(22,163,74,0.1)':type==='warning'?'rgba(202,138,4,0.1)':'rgba(220,38,38,0.1)'};
+        color:${type==='success'?'#86efac':type==='warning'?'#fde047':'#fca5a5'};">
+        <i class="fas ${icons[type]} mt-1"></i><span>${msg}</span>
+      </div>`;
+  });
+
+  const breachDiv = document.getElementById('breachDiv');
+  if (data.breached === null) {
+    breachDiv.innerHTML = `<div class="alert alert-warning py-2">⚠️ Breach database unreachable. Check internet.</div>`;
+  } else if (data.breached) {
+    breachDiv.innerHTML = `<div class="alert alert-danger py-2">
+      <strong>🚨 Found in ${data.breach_count.toLocaleString()} data breaches!</strong><br>
+      <small>This password has been exposed. Never use it anywhere.</small></div>`;
+  } else {
+    breachDiv.innerHTML = `<div class="alert alert-success py-2">
+      ✅ <strong>Not found in any breach database.</strong></div>`;
+  }
+
+  document.getElementById('suggestionText').textContent = data.suggestion;
+  document.getElementById('resultsCard').style.display = 'block';
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = document.getElementById('suggestionText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy'; }, 2000);
+  });
+});
+
+function getCookie(name) {
+  const val = `; ${document.cookie}`;
+  const parts = val.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+</script>
 {% endblock %}
