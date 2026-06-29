@@ -237,3 +237,29 @@ a:hover { color: #c7d2fe; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+
+/* Vault */
+.site-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.password-dots {
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  min-width: 80px;
+}
+
+.category-badge-social   { background: rgba(59,130,246,0.2);  color: #93c5fd; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-banking  { background: rgba(22,163,74,0.2);   color: #86efac; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-work     { background: rgba(139,92,246,0.2);  color: #c4b5fd; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-email    { background: rgba(249,115,22,0.2);  color: #fdba74; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-shopping { background: rgba(236,72,153,0.2);  color: #f9a8d4; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-gaming   { background: rgba(234,179,8,0.2);   color: #fde047; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+.category-badge-other    { background: rgba(100,116,139,0.2); color: #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.75rem; }

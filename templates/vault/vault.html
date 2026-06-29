@@ -1,4 +1,266 @@
 {% extends 'base.html' %}
+{% block title %}Password Vault — PassGuard Pro{% endblock %}
+
 {% block content %}
-<h2>Vault — Coming Soon</h2>
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h2><i class="fas fa-vault me-2 text-primary"></i>Password Vault</h2>
+    <p>AES-256 encrypted password storage — {{ total }} entries</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="fas fa-plus me-2"></i>Add Password
+  </button>
+</div>
+
+<!-- Category Filter -->
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{% url 'vault' %}"
+     class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    All
+  </a>
+  {% for key, label in categories %}
+  <a href="?category={{ key }}"
+     class="btn btn-sm {% if selected_category == key %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-success alert-dismissible fade show">
+      {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Vault Table -->
+{% if vault_data %}
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Website</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Category</th>
+          <th>Added</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in vault_data %}
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <div class="site-icon">{{ entry.website_name|first|upper }}</div>
+              <div>
+                <div class="fw-semibold">{{ entry.website_name }}</div>
+                {% if entry.website_url %}
+                  <a href="{{ entry.website_url }}" target="_blank"
+                     style="font-size:0.75rem;color:#94a3b8;">
+                    {{ entry.website_url|truncatechars:30 }}
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="color:#a5b4fc;">{{ entry.username }}</span>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <span class="password-dots" id="pwd-{{ entry.id }}">••••••••</span>
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                      onclick="togglePassword({{ entry.id }})">
+                <i class="fas fa-eye" id="eye-{{ entry.id }}"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                      onclick="copyPassword({{ entry.id }}, '{{ entry.password }}')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </td>
+          <td>
+            <span class="badge category-badge-{{ entry.category }}">
+              {{ entry.category_display }}
+            </span>
+          </td>
+          <td style="color:#94a3b8;font-size:0.85rem;">
+            {{ entry.created_at|date:"M d, Y" }}
+          </td>
+          <td class="text-end pe-4">
+            <button class="btn btn-sm btn-outline-warning me-1"
+                    onclick="toggleFav({{ entry.id }})" id="fav-{{ entry.id }}">
+              <i class="fas fa-star {% if entry.is_favourite %}text-warning{% endif %}"></i>
+            </button>
+            <a href="{% url 'delete_entry' entry.id %}"
+               class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Delete this entry?')">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+  <i class="fas fa-vault fa-4x text-muted mb-3"></i>
+  <h5 class="text-muted">Vault is empty</h5>
+  <p class="text-muted">Add your first password to get started</p>
+  <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="fas fa-plus me-2"></i>Add First Password
+  </button>
+</div>
+{% endif %}
+
+
+<!-- Add Password Modal -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="background:#1e293b;border:1px solid #334155;border-radius:16px;">
+      <div class="modal-header" style="border-bottom:1px solid #334155;">
+        <h5 class="modal-title">
+          <i class="fas fa-plus me-2 text-primary"></i>Add New Password
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form method="POST" action="{% url 'add_entry' %}">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Website Name *</label>
+              <input type="text" name="website_name" class="form-control"
+                     placeholder="e.g. Facebook" required/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Website URL</label>
+              <input type="url" name="website_url" class="form-control"
+                     placeholder="https://facebook.com"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Username / Email *</label>
+              <input type="text" name="username" class="form-control"
+                     placeholder="your@email.com" required/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Password *</label>
+              <div class="input-group">
+                <input type="password" name="password" id="modalPassword"
+                       class="form-control" placeholder="Enter password" required/>
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="toggleModalPwd()">
+                  <i class="fas fa-eye" id="modalEye"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success"
+                        onclick="generateForModal()">
+                  <i class="fas fa-wand-magic-sparkles"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <select name="category" class="form-select">
+                {% for key, label in categories %}
+                  <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Notes (optional)</label>
+              <input type="text" name="notes" class="form-control"
+                     placeholder="Any extra info..."/>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-shield-halved me-2"></i>Encrypt & Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const passwordCache = {};
+
+async function togglePassword(id) {
+  const span = document.getElementById('pwd-' + id);
+  const eye = document.getElementById('eye-' + id);
+
+  if (span.textContent === '••••••••') {
+    if (!passwordCache[id]) {
+      const res = await fetch(`/vault/get-password/${id}/`);
+      const data = await res.json();
+      passwordCache[id] = data.password;
+    }
+    span.textContent = passwordCache[id];
+    span.style.color = '#a5b4fc';
+    eye.className = 'fas fa-eye-slash';
+  } else {
+    span.textContent = '••••••••';
+    span.style.color = '';
+    eye.className = 'fas fa-eye';
+  }
+}
+
+function copyPassword(id, pwd) {
+  const p = passwordCache[id] || pwd;
+  navigator.clipboard.writeText(p).then(() => {
+    showToast('Password copied!');
+  });
+}
+
+async function toggleFav(id) {
+  const res = await fetch(`/vault/favourite/${id}/`);
+  const data = await res.json();
+  const icon = document.querySelector(`#fav-${id} i`);
+  icon.className = data.is_favourite ? 'fas fa-star text-warning' : 'fas fa-star';
+}
+
+function toggleModalPwd() {
+  const input = document.getElementById('modalPassword');
+  const eye = document.getElementById('modalEye');
+  input.type = input.type === 'password' ? 'text' : 'password';
+  eye.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+function generateForModal() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+  let pwd = '';
+  for (let i = 0; i < 16; i++) {
+    pwd += chars[Math.floor(Math.random() * chars.length)];
+  }
+  document.getElementById('modalPassword').value = pwd;
+  document.getElementById('modalPassword').type = 'text';
+}
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed bottom-0 end-0 m-3 alert alert-success py-2 px-3';
+  toast.style.zIndex = 9999;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+function getCookie(name) {
+  const val = `; ${document.cookie}`;
+  const parts = val.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+</script>
 {% endblock %}
