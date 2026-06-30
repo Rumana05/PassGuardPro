@@ -1,4 +1,246 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard — PassGuard Pro{% endblock %}
+
 {% block content %}
-<h2>Dashboard — Coming Soon</h2>
+<div class="page-header">
+  <h2><i class="fas fa-gauge-high me-2 text-primary"></i>Security Dashboard</h2>
+  <p>Welcome back, <strong>{{ user.username }}</strong> — here's your security overview</p>
+</div>
+
+<!-- Security Score -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(79,70,229,0.2);">
+        <i class="fas fa-shield-halved" style="color:#a5b4fc;"></i>
+      </div>
+      <div>
+        <div class="stat-num">{{ security_score }}%</div>
+        <div class="stat-label">Security Score</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(14,165,233,0.2);">
+        <i class="fas fa-magnifying-glass-chart" style="color:#7dd3fc;"></i>
+      </div>
+      <div>
+        <div class="stat-num">{{ total_analyzed }}</div>
+        <div class="stat-label">Passwords Analyzed</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(22,163,74,0.2);">
+        <i class="fas fa-vault" style="color:#86efac;"></i>
+      </div>
+      <div>
+        <div class="stat-num">{{ total_vault }}</div>
+        <div class="stat-label">Vault Entries</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(220,38,38,0.2);">
+        <i class="fas fa-triangle-exclamation" style="color:#fca5a5;"></i>
+      </div>
+      <div>
+        <div class="stat-num">{{ total_breached }}</div>
+        <div class="stat-label">Breached Found</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Security Score Bar -->
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="fw-bold mb-0">Overall Security Score</h6>
+    <span class="fw-bold" style="color:#a5b4fc;">{{ security_score }}/100</span>
+  </div>
+  <div class="progress" style="height:16px;border-radius:10px;">
+    <div class="progress-bar" style="
+      width:{{ security_score }}%;
+      border-radius:10px;
+      background: linear-gradient(90deg,
+        {% if security_score >= 75 %}#16a34a, #22c55e
+        {% elif security_score >= 50 %}#ca8a04, #eab308
+        {% else %}#dc2626, #ef4444{% endif %});
+      transition: width 1s ease;">
+    </div>
+  </div>
+  <div class="d-flex justify-content-between mt-1">
+    <small style="color:#dc2626;">Weak</small>
+    <small style="color:#ca8a04;">Moderate</small>
+    <small style="color:#16a34a;">Strong</small>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+
+  <!-- Strength Distribution Chart -->
+  <div class="col-lg-6">
+    <div class="card p-4 h-100">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-chart-pie me-2 text-primary"></i>Password Strength Distribution
+      </h6>
+      {% if total_analyzed > 0 %}
+        <canvas id="strengthChart" height="220"></canvas>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-chart-pie fa-3x mb-2"></i>
+          <p>No data yet — analyze some passwords!</p>
+          <a href="{% url 'analyzer' %}" class="btn btn-sm btn-primary">Go to Analyzer</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Vault Category Chart -->
+  <div class="col-lg-6">
+    <div class="card p-4 h-100">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-chart-donut me-2 text-success"></i>Vault Categories
+      </h6>
+      {% if total_vault > 0 %}
+        <canvas id="categoryChart" height="220"></canvas>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-vault fa-3x mb-2"></i>
+          <p>No vault entries yet!</p>
+          <a href="{% url 'vault' %}" class="btn btn-sm btn-success">Go to Vault</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Strength Breakdown -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-bars me-2 text-primary"></i>Strength Breakdown
+      </h6>
+      {% for label, count, color in strength_breakdown %}
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span style="font-size:0.9rem;">{{ label }}</span>
+          <span style="color:#94a3b8;font-size:0.85rem;">{{ count }}</span>
+        </div>
+        <div class="progress" style="height:8px;border-radius:8px;">
+          <div class="progress-bar" style="
+            width:{% if total_analyzed > 0 %}{% widthratio count total_analyzed 100 %}{% else %}0{% endif %}%;
+            background:{{ color }};border-radius:8px;"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Analysis -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-clock-rotate-left me-2 text-muted"></i>Recent Analysis
+      </h6>
+      {% if recent_analysis %}
+        {% for check in recent_analysis %}
+        <div class="d-flex justify-content-between align-items-center py-2"
+             style="border-bottom:1px solid #334155;">
+          <div>
+            <code style="color:#a5b4fc;">{{ check.password_masked }}</code>
+            <div style="font-size:0.75rem;color:#94a3b8;">
+              {{ check.checked_at|date:"M d, H:i" }}
+            </div>
+          </div>
+          <div class="text-end">
+            {% if check.strength_label == 'Very Strong' %}
+              <span class="badge bg-success">{{ check.strength_label }}</span>
+            {% elif check.strength_label == 'Strong' %}
+              <span class="badge bg-info">{{ check.strength_label }}</span>
+            {% elif check.strength_label == 'Moderate' %}
+              <span class="badge bg-warning text-dark">{{ check.strength_label }}</span>
+            {% else %}
+              <span class="badge bg-danger">{{ check.strength_label }}</span>
+            {% endif %}
+            {% if check.was_breached %}
+              <div style="font-size:0.7rem;color:#fca5a5;">
+                <i class="fas fa-triangle-exclamation"></i> Breached
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted text-center py-3">No analysis yet</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const strengthData = {{ strength_chart|safe }};
+const categoryData = {{ category_chart|safe }};
+
+// Strength Pie Chart
+{% if total_analyzed > 0 %}
+new Chart(document.getElementById('strengthChart'), {
+  type: 'doughnut',
+  data: {
+    labels: strengthData.labels,
+    datasets: [{
+      data: strengthData.data,
+      backgroundColor: strengthData.colors,
+      borderWidth: 2,
+      borderColor: '#1e293b',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#94a3b8', padding: 12, font: { size: 12 } }
+      }
+    }
+  }
+});
+{% endif %}
+
+// Category Donut Chart
+{% if total_vault > 0 %}
+new Chart(document.getElementById('categoryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: categoryData.labels,
+    datasets: [{
+      data: categoryData.data,
+      backgroundColor: [
+        '#4f46e5','#16a34a','#0ea5e9',
+        '#ca8a04','#dc2626','#7c3aed','#94a3b8'
+      ],
+      borderWidth: 2,
+      borderColor: '#1e293b',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#94a3b8', padding: 12, font: { size: 12 } }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
 {% endblock %}

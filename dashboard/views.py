@@ -72,6 +72,13 @@ def dashboard_view(request):
         'moderate': moderate,
         'weak': weak,
         'very_weak': very_weak,
+        'strength_breakdown': [
+            ('Very Strong', very_strong, '#16a34a'),
+            ('Strong', strong, '#0ea5e9'),
+            ('Moderate', moderate, '#ca8a04'),
+            ('Weak', weak, '#ea580c'),
+            ('Very Weak', very_weak, '#dc2626'),
+        ],
     }
     return render(request, 'dashboard/dashboard.html', context)
 
