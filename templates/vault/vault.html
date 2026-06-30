@@ -262,5 +262,17 @@ function getCookie(name) {
   const parts = val.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
+
+// Prefill password from generator page
+window.addEventListener('DOMContentLoaded', () => {
+  const prefill = sessionStorage.getItem('prefillPassword');
+  if (prefill) {
+    const modal = new bootstrap.Modal(document.getElementById('addModal'));
+    modal.show();
+    document.getElementById('modalPassword').value = prefill;
+    document.getElementById('modalPassword').type = 'text';
+    sessionStorage.removeItem('prefillPassword');
+  }
+});
 </script>
 {% endblock %}

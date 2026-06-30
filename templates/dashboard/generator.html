@@ -1,4 +1,261 @@
 {% extends 'base.html' %}
+{% block title %}Password Generator — PassGuard Pro{% endblock %}
+
 {% block content %}
-<h2>Generator — Coming Soon</h2>
+<div class="page-header">
+  <h2><i class="fas fa-wand-magic-sparkles me-2 text-primary"></i>Password Generator</h2>
+  <p>Generate cryptographically secure passwords with custom options</p>
+</div>
+
+<div class="row g-4">
+  <!-- Generator Card -->
+  <div class="col-lg-7">
+    <div class="card p-4">
+
+      <!-- Generated Password Display -->
+      <div class="p-4 rounded mb-4 text-center" style="background:#0f172a;border:1px solid #334155;">
+        <code id="generatedPassword" class="d-block mb-3" style="font-size:1.4rem;color:#a5b4fc;word-break:break-all;">
+          Click Generate
+        </code>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-primary" id="generateBtn">
+            <i class="fas fa-rotate me-2"></i>Generate
+          </button>
+          <button class="btn btn-outline-success" id="copyGenBtn">
+            <i class="fas fa-copy me-2"></i>Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Strength indicator -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">Strength</small>
+          <span class="badge bg-success" id="genStrengthBadge">Very Strong</span>
+        </div>
+        <div class="progress" style="height:8px;border-radius:8px;">
+          <div class="progress-bar bg-success" id="genStrengthBar" style="width:100%;border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Length Slider -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between mb-2">
+          <label class="form-label mb-0">Password Length</label>
+          <span class="fw-bold" id="lengthValue" style="color:#a5b4fc;">16</span>
+        </div>
+        <input type="range" class="form-range" id="lengthSlider" min="8" max="32" value="16"/>
+      </div>
+
+      <!-- Options -->
+      <div class="mb-4">
+        <label class="form-label mb-3">Character Types</label>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="useUpper" checked/>
+          <label class="form-check-label" for="useUpper">Uppercase (A-Z)</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="useLower" checked disabled/>
+          <label class="form-check-label" for="useLower">Lowercase (a-z) — always on</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="useDigits" checked/>
+          <label class="form-check-label" for="useDigits">Numbers (0-9)</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="useSpecial" checked/>
+          <label class="form-check-label" for="useSpecial">Special Characters (!@#$%)</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="excludeSimilar"/>
+          <label class="form-check-label" for="excludeSimilar">Exclude Similar Characters (i, l, 1, O, 0)</label>
+        </div>
+      </div>
+
+      <button class="btn btn-success w-100 py-2" id="saveToVaultBtn">
+        <i class="fas fa-vault me-2"></i>Save to Vault
+      </button>
+    </div>
+  </div>
+
+  <!-- Right side: Passphrase Generator -->
+  <div class="col-lg-5">
+    <div class="card p-4 mb-4">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-key me-2 text-success"></i>Passphrase Generator
+      </h6>
+      <p class="text-muted small">Easy to remember, hard to crack — word-based passwords</p>
+
+      <code id="passphraseOutput" class="d-block p-3 rounded mb-3"
+            style="background:#0f172a;border:1px solid #334155;color:#86efac;word-break:break-all;">
+        Click Generate
+      </code>
+
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">Number of Words</small>
+          <span class="fw-bold" id="wordCountValue" style="color:#86efac;">4</span>
+        </div>
+        <input type="range" class="form-range" id="wordCountSlider" min="3" max="8" value="4"/>
+      </div>
+
+      <button class="btn btn-success w-100" id="generatePassphraseBtn">
+        <i class="fas fa-rotate me-2"></i>Generate Passphrase
+      </button>
+    </div>
+
+    <!-- Tips Card -->
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3"><i class="fas fa-lightbulb me-2 text-warning"></i>Password Tips</h6>
+      <ul style="color:#94a3b8;font-size:0.9rem;padding-left:18px;">
+        <li class="mb-2">Use at least 12-16 characters</li>
+        <li class="mb-2">Never reuse passwords across sites</li>
+        <li class="mb-2">Use a unique password for email & banking</li>
+        <li class="mb-2">Enable 2FA wherever possible</li>
+        <li>Change passwords if a breach is detected</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lengthSlider = document.getElementById('lengthSlider');
+const lengthValue = document.getElementById('lengthValue');
+const generateBtn = document.getElementById('generateBtn');
+const generatedPassword = document.getElementById('generatedPassword');
+
+lengthSlider.addEventListener('input', () => {
+  lengthValue.textContent = lengthSlider.value;
+});
+
+function generatePassword() {
+  const length = parseInt(lengthSlider.value);
+  const useUpper = document.getElementById('useUpper').checked;
+  const useDigits = document.getElementById('useDigits').checked;
+  const useSpecial = document.getElementById('useSpecial').checked;
+  const excludeSimilar = document.getElementById('excludeSimilar').checked;
+
+  let lower = 'abcdefghijklmnopqrstuvwxyz';
+  let upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let digits = '0123456789';
+  let special = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+
+  if (excludeSimilar) {
+    lower = lower.replace(/[il]/g, '');
+    upper = upper.replace(/[O]/g, '');
+    digits = digits.replace(/[10]/g, '');
+  }
+
+  let chars = lower;
+  let required = [randomChar(lower)];
+
+  if (useUpper) { chars += upper; required.push(randomChar(upper)); }
+  if (useDigits) { chars += digits; required.push(randomChar(digits)); }
+  if (useSpecial) { chars += special; required.push(randomChar(special)); }
+
+  let remaining = [];
+  for (let i = 0; i < length - required.length; i++) {
+    remaining.push(randomChar(chars));
+  }
+
+  let pwdArr = required.concat(remaining);
+  // shuffle
+  for (let i = pwdArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pwdArr[i], pwdArr[j]] = [pwdArr[j], pwdArr[i]];
+  }
+
+  const password = pwdArr.join('');
+  generatedPassword.textContent = password;
+  updateGenStrength(password);
+  return password;
+}
+
+function randomChar(str) {
+  return str[Math.floor(Math.random() * str.length)];
+}
+
+function updateGenStrength(password) {
+  let score = 0;
+  if (password.length >= 16) score += 3;
+  else if (password.length >= 12) score += 2;
+  else score += 1;
+  if (/[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 2;
+
+  const badge = document.getElementById('genStrengthBadge');
+  const bar = document.getElementById('genStrengthBar');
+
+  if (score >= 6) {
+    badge.className = 'badge bg-success'; badge.textContent = 'Very Strong';
+    bar.className = 'progress-bar bg-success'; bar.style.width = '100%';
+  } else if (score >= 4) {
+    badge.className = 'badge bg-info'; badge.textContent = 'Strong';
+    bar.className = 'progress-bar bg-info'; bar.style.width = '75%';
+  } else {
+    badge.className = 'badge bg-warning text-dark'; badge.textContent = 'Moderate';
+    bar.className = 'progress-bar bg-warning'; bar.style.width = '50%';
+  }
+}
+
+generateBtn.addEventListener('click', generatePassword);
+window.addEventListener('DOMContentLoaded', generatePassword);
+
+document.getElementById('copyGenBtn').addEventListener('click', () => {
+  const text = generatedPassword.textContent;
+  if (text === 'Click Generate') return;
+  navigator.clipboard.writeText(text).then(() => showToast('Password copied!'));
+});
+
+// Passphrase Generator
+const words = [
+  'apple','river','mountain','tiger','cloud','silver','forest','ocean','planet','thunder',
+  'castle','garden','dragon','crystal','phoenix','shadow','horizon','falcon','golden','winter',
+  'summer','autumn','desert','island','meadow','canyon','glacier','volcano','comet','nebula',
+  'velvet','amber','coral','jasper','onyx','marble','copper','bronze','iron','steel'
+];
+
+const wordCountSlider = document.getElementById('wordCountSlider');
+const wordCountValue = document.getElementById('wordCountValue');
+wordCountSlider.addEventListener('input', () => {
+  wordCountValue.textContent = wordCountSlider.value;
+});
+
+function generatePassphrase() {
+  const count = parseInt(wordCountSlider.value);
+  let selected = [];
+  for (let i = 0; i < count; i++) {
+    const word = words[Math.floor(Math.random() * words.length)];
+    selected.push(word.charAt(0).toUpperCase() + word.slice(1));
+  }
+  const number = Math.floor(Math.random() * 90 + 10);
+  const symbols = ['!', '@', '#', '$', '%'];
+  const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+  const passphrase = selected.join('-') + number + symbol;
+  document.getElementById('passphraseOutput').textContent = passphrase;
+}
+
+document.getElementById('generatePassphraseBtn').addEventListener('click', generatePassphrase);
+
+// Save to vault — redirect with prefilled password
+document.getElementById('saveToVaultBtn').addEventListener('click', () => {
+  const pwd = generatedPassword.textContent;
+  if (pwd === 'Click Generate') { alert('Generate a password first!'); return; }
+  sessionStorage.setItem('prefillPassword', pwd);
+  window.location.href = "{% url 'vault' %}";
+});
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed bottom-0 end-0 m-3 alert alert-success py-2 px-3';
+  toast.style.zIndex = 9999;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+</script>
 {% endblock %}
