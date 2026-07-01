@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}Profile — PassGuard Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-user-circle me-2 text-primary"></i>My Profile</h2>
+  <p>Manage your account settings and security preferences</p>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{% if 'successfully' in message.tags or '✅' in message|stringformat:'s' %}success{% else %}danger{% endif %} alert-dismissible fade show">
+      {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+
+  <!-- Left: Profile Info -->
+  <div class="col-lg-4">
+
+    <!-- Avatar Card -->
+    <div class="card p-4 text-center mb-4">
+      <div class="profile-avatar mx-auto mb-3">
+        {{ user.username|first|upper }}
+      </div>
+      <h5 class="fw-bold mb-1">{{ user.username }}</h5>
+      <p style="color:#94a3b8;">{{ user.email|default:"No email set" }}</p>
+      {% if user.first_name or user.last_name %}
+        <p style="color:#a5b4fc;">{{ user.first_name }} {{ user.last_name }}</p>
+      {% endif %}
+      <div class="mt-2">
+        <small style="color:#94a3b8;">
+          <i class="fas fa-calendar me-1"></i>
+          Member since {{ user.date_joined|date:"M Y" }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="card p-4 mb-4">
+      <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Your Stats</h6>
+
+      <div class="d-flex justify-content-between align-items-center py-2"
+           style="border-bottom:1px solid #334155;">
+        <span style="color:#94a3b8;">Passwords Analyzed</span>
+        <span class="fw-bold" style="color:#a5b4fc;">{{ total_analyzed }}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-2"
+           style="border-bottom:1px solid #334155;">
+        <span style="color:#94a3b8;">Vault Entries</span>
+        <span class="fw-bold" style="color:#86efac;">{{ total_vault }}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-2">
+        <span style="color:#94a3b8;">Breaches Found</span>
+        <span class="fw-bold" style="color:#fca5a5;">{{ total_breached }}</span>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3">
+        <i class="fas fa-clock-rotate-left me-2 text-muted"></i>Recent Activity
+      </h6>
+      {% for log in recent_logs %}
+      <div class="py-2" style="border-bottom:1px solid #334155;">
+        <div style="font-size:0.85rem;color:#f1f5f9;">
+          {% if log.action == 'login' %}🔐
+          {% elif log.action == 'logout' %}🚪
+          {% elif log.action == 'analyze' %}🔍
+          {% elif log.action == 'vault_add' %}➕
+          {% elif log.action == 'vault_delete' %}🗑️
+          {% endif %}
+          {{ log.description }}
+        </div>
+        <div style="font-size:0.75rem;color:#94a3b8;">
+          {{ log.created_at|date:"M d, Y — H:i" }}
+        </div>
+      </div>
+      {% empty %}
+        <p class="text-muted small">No activity yet</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Right: Settings -->
+  <div class="col-lg-8">
+
+    <!-- Update Profile Info -->
+    <div class="card p-4 mb-4">
+      <h5 class="fw-bold mb-4">
+        <i class="fas fa-pen me-2 text-primary"></i>Update Profile Info
+      </h5>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_info"/>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            <input type="text" name="first_name" class="form-control"
+                   value="{{ user.first_name }}" placeholder="First name"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" class="form-control"
+                   value="{{ user.last_name }}" placeholder="Last name"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control"
+                   value="{{ user.username }}" disabled/>
+            <small style="color:#94a3b8;">Username cannot be changed</small>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Email Address</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ user.email }}" placeholder="your@email.com"/>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">
+          <i class="fas fa-save me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card p-4 mb-4">
+      <h5 class="fw-bold mb-4">
+        <i class="fas fa-lock me-2 text-warning"></i>Change Password
+      </h5>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_password"/>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="current_password" class="form-control"
+                   placeholder="Enter current password" required/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password1" class="form-control"
+                   placeholder="Enter new password" required/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" name="new_password2" class="form-control"
+                   placeholder="Repeat new password" required/>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-warning mt-4" style="color:#0f172a;">
+          <i class="fas fa-key me-2"></i>Change Password
+        </button>
+      </form>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="card p-4" style="border-color:#dc2626 !important;">
+      <h5 class="fw-bold mb-2" style="color:#fca5a5;">
+        <i class="fas fa-triangle-exclamation me-2"></i>Danger Zone
+      </h5>
+      <p style="color:#94a3b8;font-size:0.9rem;">
+        Deleting your account will permanently remove all your data including
+        vault entries, analysis history, and activity logs. This cannot be undone.
+      </p>
+      <button class="btn btn-danger mt-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+        <i class="fas fa-trash me-2"></i>Delete My Account
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:#1e293b;border:1px solid #dc2626;border-radius:16px;">
+      <div class="modal-header" style="border-bottom:1px solid #334155;">
+        <h5 class="modal-title" style="color:#fca5a5;">
+          <i class="fas fa-triangle-exclamation me-2"></i>Delete Account
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p style="color:#94a3b8;">
+          Are you absolutely sure? All your data will be permanently deleted.
+          Enter your password to confirm.
+        </p>
+        <form method="POST" action="{% url 'delete_account' %}">
+          {% csrf_token %}
+          <label class="form-label">Your Password</label>
+          <input type="password" name="password" class="form-control mb-3"
+                 placeholder="Enter your password to confirm" required/>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash me-2"></i>Yes, Delete My Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

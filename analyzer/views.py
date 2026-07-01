@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from dashboard.models import ActivityLog
 
 from .utils import check_password_strength, check_breach, generate_password, mask_password
 from .models import PasswordAnalysis
@@ -47,7 +48,11 @@ def analyze_api(request):
         was_breached=breached if breached is not None else False,
         breach_count=breach_count if breach_count else 0,
     )
-
+    ActivityLog.objects.create(
+        user=request.user,
+        action='analyze',
+        description=f"Analyzed a password — Result: {result['strength']}"
+    )
     return JsonResponse({
         'strength': result['strength'],
         'strength_class': result['strength_class'],

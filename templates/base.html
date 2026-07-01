@@ -33,6 +33,9 @@
     <li><a href="{% url 'activity_log' %}" class="{% if request.resolver_match.url_name == 'activity_log' %}active{% endif %}">
       <i class="fas fa-clock-rotate-left"></i> Activity Log
     </a></li>
+    <li><a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+  <i class="fas fa-user-circle"></i> Profile
+</a></li>
   </ul>
   <div class="sidebar-footer">
     <div class="user-info">

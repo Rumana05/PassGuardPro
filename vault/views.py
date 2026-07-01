@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import json
+from dashboard.models import ActivityLog
 
 from .models import VaultEntry
 from .encryption import encrypt_password, decrypt_password
@@ -66,6 +67,14 @@ def add_entry(request):
             category=category,
             notes=notes,
         )
+
+        ActivityLog.objects.create(
+            user=request.user,
+            action='vault_add',
+            description=f"Added '{website_name}' to vault"
+        )
+
+
         messages.success(request, f'✅ {website_name} added to vault!')
         return redirect('vault')
 
@@ -77,9 +86,13 @@ def delete_entry(request, entry_id):
     entry = get_object_or_404(VaultEntry, id=entry_id, user=request.user)
     name = entry.website_name
     entry.delete()
+    ActivityLog.objects.create(
+        user=request.user,
+        action='vault_delete',
+        description=f"Deleted '{name}' from vault"
+    )
     messages.success(request, f'🗑️ {name} deleted from vault!')
     return redirect('vault')
-
 
 @login_required
 def toggle_favourite(request, entry_id):

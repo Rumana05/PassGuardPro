@@ -1,4 +1,68 @@
 {% extends 'base.html' %}
+{% block title %}Activity Log — PassGuard Pro{% endblock %}
+
 {% block content %}
-<h2>Activity Log — Coming Soon</h2>
+<div class="page-header">
+  <h2><i class="fas fa-clock-rotate-left me-2 text-primary"></i>Activity Log</h2>
+  <p>Track all security-related activity on your account</p>
+</div>
+
+{% if logs %}
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Action</th>
+          <th>Description</th>
+          <th>Date & Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="ps-4">
+            {% if log.action == 'login' %}
+              <span class="badge" style="background:rgba(22,163,74,0.2);color:#86efac;">
+                <i class="fas fa-right-to-bracket me-1"></i>Login
+              </span>
+            {% elif log.action == 'logout' %}
+              <span class="badge" style="background:rgba(100,116,139,0.2);color:#cbd5e1;">
+                <i class="fas fa-right-from-bracket me-1"></i>Logout
+              </span>
+            {% elif log.action == 'analyze' %}
+              <span class="badge" style="background:rgba(14,165,233,0.2);color:#7dd3fc;">
+                <i class="fas fa-magnifying-glass-chart me-1"></i>Analyzed
+              </span>
+            {% elif log.action == 'vault_add' %}
+              <span class="badge" style="background:rgba(79,70,229,0.2);color:#a5b4fc;">
+                <i class="fas fa-plus me-1"></i>Vault Add
+              </span>
+            {% elif log.action == 'vault_delete' %}
+              <span class="badge" style="background:rgba(220,38,38,0.2);color:#fca5a5;">
+                <i class="fas fa-trash me-1"></i>Vault Delete
+              </span>
+            {% elif log.action == 'generate' %}
+              <span class="badge" style="background:rgba(234,179,8,0.2);color:#fde047;">
+                <i class="fas fa-wand-magic-sparkles me-1"></i>Generated
+              </span>
+            {% endif %}
+          </td>
+          <td style="color:#cbd5e1;">{{ log.description|default:"—" }}</td>
+          <td style="color:#94a3b8;font-size:0.85rem;">
+            {{ log.created_at|date:"M d, Y — H:i" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="fas fa-clock-rotate-left fa-4x text-muted mb-3"></i>
+  <h5 class="text-muted">No activity yet</h5>
+  <p class="text-muted">Your account activity will appear here</p>
+</div>
+{% endif %}
 {% endblock %}

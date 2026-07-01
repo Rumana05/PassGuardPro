@@ -198,6 +198,14 @@ body {
 .btn-danger { background: var(--danger) !important; border-color: var(--danger) !important; border-radius: 10px; }
 .btn-outline-primary { border-color: var(--primary) !important; color: #a5b4fc !important; border-radius: 10px; }
 .btn-outline-primary:hover { background: var(--primary) !important; color: white !important; }
+.btn-outline-success { border-color: var(--success) !important; color: #86efac !important; border-radius: 10px; }
+.btn-outline-success:hover { background: var(--success) !important; color: white !important; }
+.btn-outline-danger { border-color: var(--danger) !important; color: #fca5a5 !important; border-radius: 10px; }
+.btn-outline-danger:hover { background: var(--danger) !important; color: white !important; }
+.btn-outline-warning { border-color: var(--warning) !important; color: #fde047 !important; border-radius: 10px; }
+.btn-outline-warning:hover { background: var(--warning) !important; color: white !important; }
+.btn-outline-secondary { border-color: var(--border) !important; color: var(--muted) !important; background: #0f172a !important; border-radius: 10px; }
+.btn-outline-secondary:hover { background: var(--border) !important; color: var(--text) !important; }
 
 /* ── Page Header ── */
 .page-header {
@@ -206,18 +214,49 @@ body {
 .page-header h2 { font-weight: 700; font-size: 1.6rem; }
 .page-header p { color: var(--muted); margin-top: 4px; }
 
-/* ── Table ── */
-.table { color: var(--text) !important; }
-.table thead th {
-  background: #0f172a;
-  color: var(--muted);
-  border-color: var(--border);
+/* ── TABLE — Force dark theme, override Bootstrap completely ── */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text);
+  --bs-table-striped-bg: transparent;
+  --bs-table-striped-color: var(--text);
+  --bs-table-active-bg: transparent;
+  --bs-table-active-color: var(--text);
+  --bs-table-hover-bg: rgba(255,255,255,0.05);
+  --bs-table-hover-color: var(--text);
+  --bs-table-border-color: var(--border);
+  color: var(--text) !important;
+  background-color: var(--card-bg) !important;
+  margin-bottom: 0 !important;
+}
+
+.table > :not(caption) > * > * {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+  border-bottom-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.table thead tr th {
+  background-color: #0f172a !important;
+  color: var(--muted) !important;
+  border-color: var(--border) !important;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
 }
-.table td { border-color: var(--border); vertical-align: middle; }
-.table-hover tbody tr:hover { background: rgba(255,255,255,0.03) !important; }
+
+.table tbody tr td {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover td {
+  background-color: #2a3850 !important;
+}
 
 /* ── Badge ── */
 .badge { border-radius: 6px; font-weight: 500; }
@@ -239,7 +278,7 @@ a:hover { color: #c7d2fe; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 
-/* Vault */
+/* ── Vault ── */
 .site-icon {
   width: 36px; height: 36px;
   border-radius: 8px;
@@ -263,3 +302,32 @@ a:hover { color: #c7d2fe; }
 .category-badge-shopping { background: rgba(236,72,153,0.2);  color: #f9a8d4; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
 .category-badge-gaming   { background: rgba(234,179,8,0.2);   color: #fde047; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
 .category-badge-other    { background: rgba(100,116,139,0.2); color: #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.75rem; }
+
+/* ── Form switch / checkbox ── */
+.form-check-input {
+  background-color: #0f172a !important;
+  border-color: var(--border) !important;
+}
+.form-check-input:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.form-check-label { color: var(--text); font-size: 0.9rem; }
+
+/* ── Range slider ── */
+.form-range::-webkit-slider-thumb { background: var(--primary); }
+.form-range::-moz-range-thumb { background: var(--primary); }
+.form-range::-webkit-slider-runnable-track { background: var(--border); }
+
+/* ── Modal ── */
+.modal-content { background: var(--card-bg) !important; border: 1px solid var(--border) !important; }
+.btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+/* ── Profile ── */
+.profile-avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 700; color: white;
+}
